@@ -1,0 +1,251 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int matrix[100][100];
+
+typedef struct Node {
+    int vertex;
+    struct Node* next;
+} Node;
+
+Node* list[100];
+int edge[4000][2];
+
+void insert_matrix(int u, int v) {
+    matrix[u][v] = matrix[v][u] = 1;
+}
+
+void insert_list(int u, int v) {
+    Node* p = malloc(sizeof(Node));
+    p->vertex = v;
+    p->next = list[u];
+    list[u] = p;
+
+    p = malloc(sizeof(Node));
+    p->vertex = u;
+    p->next = list[v];
+    list[v] = p;
+}
+
+void create_graph(int n) {
+    int i, u, v;
+
+    for (i = 0; i < n; i++) {
+        do {
+            u = rand() % 100;
+            v = rand() % 100;
+        } while (u == v || matrix[u][v]);
+
+        edge[i][0] = u;
+        edge[i][1] = v;
+
+        insert_matrix(u, v);
+        insert_list(u, v);
+    }
+}
+
+int insert_matrix_edge(int u, int v) {
+    int c = 1;
+    insert_matrix(u, v);
+    return c;
+}
+
+int insert_list_edge(int u, int v) {
+    int c = 0;
+    Node* p = list[u];
+
+    while (p != NULL) {
+        c++;
+        p = p->next;
+    }
+
+    insert_list(u, v);
+    return c;
+}
+
+int delete_matrix_edge(int u, int v) {
+    matrix[u][v] = matrix[v][u] = 0;
+    return 1;
+}
+
+int remove_node(int u, int v) {
+    int c = 0;
+    Node** p = &list[u];
+
+    while (*p != NULL) {
+        c++;
+
+        if ((*p)->vertex == v) {
+            Node* q = *p;
+            *p = q->next;
+            free(q);
+            return c;
+        }
+
+        p = &(*p)->next;
+    }
+
+    return c;
+}
+
+int delete_list_edge(int u, int v) {
+    int c = remove_node(u, v);
+    c += remove_node(v, u);
+    return c;
+}
+
+int check_matrix(int u, int v) {
+    int c = 1;
+    return c;
+}
+
+int check_list(int u, int v) {
+    int c = 0;
+    Node* p = list[u];
+
+    while (p != NULL) {
+        c++;
+
+        if (p->vertex == v)
+            break;
+
+        p = p->next;
+    }
+
+    return c;
+}
+
+int print_matrix(int u) {
+    int i, c = 0;
+
+    for (i = 0; i < 100; i++) {
+        c++;
+
+        if (matrix[u][i])
+            printf("%d ", i);
+    }
+
+    printf("\n");
+    return c;
+}
+
+int print_list(int u) {
+    int c = 0;
+    Node* p = list[u];
+
+    while (p != NULL) {
+        c++;
+        printf("%d ", p->vertex);
+        p = p->next;
+    }
+
+    printf("\n");
+    return c;
+}
+
+int memory_list(void) {
+    int i, c = sizeof(list);
+    Node* p;
+
+    for (i = 0; i < 100; i++) {
+        p = list[i];
+
+        while (p != NULL) {
+            c += sizeof(Node);
+            p = p->next;
+        }
+    }
+
+    return c;
+}
+
+void test(int n, int number) {
+    int i, u, v, a, b;
+
+    for (i = 0; i < 100; i++) {
+        matrix[i][0] = 0;
+        list[i] = NULL;
+    }
+
+    for (i = 0; i < 100; i++) {
+        int j;
+
+        for (j = 0; j < 100; j++)
+            matrix[i][j] = 0;
+    }
+
+    create_graph(n);
+
+    do {
+        u = rand() % 100;
+        v = rand() % 100;
+    } while (u == v || matrix[u][v]);
+
+    a = edge[0][0];
+    b = edge[0][1];
+
+    printf("\nCase %d : %s Graph - Adjacency Matrix\n",
+        number, n == 100 ? "Sparse" : "Dense");
+
+    printf("Memory                         : %lu Bytes\n",
+        (unsigned long)sizeof(matrix));
+
+    printf("Edge insertion comparisons     : %d\n",
+        insert_matrix_edge(u, v));
+
+    printf("Edge deletion comparisons      : %d\n",
+        delete_matrix_edge(a, b));
+
+    printf("Connectivity check comparisons : %d\n",
+        check_matrix(u, v));
+
+    u = rand() % 100;
+
+    printf("Adjacent vertices: ");
+    printf("Adjacent vertices comparisons  : %d\n",
+        print_matrix(u));
+
+    do {
+        u = rand() % 100;
+        v = rand() % 100;
+    } while (u == v || matrix[u][v]);
+
+    printf("\nCase %d : %s Graph - Adjacency List\n",
+        number + 1, n == 100 ? "Sparse" : "Dense");
+
+    printf("Memory                         : %d Bytes\n",
+        memory_list());
+
+    printf("Edge insertion comparisons     : %d\n",
+        insert_list_edge(u, v));
+
+    printf("Edge deletion comparisons      : %d\n",
+        delete_list_edge(a, b));
+
+    printf("Connectivity check comparisons : %d\n",
+        check_list(u, v));
+
+    u = rand() % 100;
+
+    printf("Adjacent vertices: ");
+    printf("Adjacent vertices comparisons  : %d\n",
+        print_list(u));
+
+    for (i = 0; i < 100; i++) {
+        while (list[i] != NULL) {
+            Node* p = list[i];
+            list[i] = p->next;
+            free(p);
+        }
+    }
+}
+
+int main(void) {
+    srand(time(NULL));
+
+    test(100, 1);
+    test(4000, 3);
+
+    return 0;
+}
